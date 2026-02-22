@@ -1,0 +1,82 @@
+import sys
+import requests
+from bs4 import BeautifulSoup
+
+def web_url():
+    if len(sys.argv) < 2:
+        print("Argument is None ,please provide it")
+        sys.exit()
+    else:
+        link = sys.argv[1]
+        if not link.startswith("http"):
+            print("Not an authentic url")
+            sys.exit()
+    return link
+
+
+def retreive_page(link):
+    try:
+        headers = {
+            "User-Agent":"Mozilla/5.0"
+        }
+        server_response = requests.get(link,headers=headers)
+    except requests.exceptions.RequestException as e:
+        print("Error while fetching page:", e)
+        sys.exit()
+
+    if server_response.status_code != 200:
+        print("not able to fetch the page")
+        sys.exit()
+
+    return server_response.text
+
+
+def page_html(html_content):
+    soup = BeautifulSoup(html_content, "html.parser")
+    return soup
+
+
+def page_title(soup):
+    if soup.title and soup.title.string:
+        title = soup.title.string.strip()
+        print(title)
+    else:
+        print("no heading")
+
+
+def retreive_body(soup):
+    if soup.body:
+        visible_text = soup.body.get_text(separator="\n", strip=True)
+        if visible_text:
+            print("page_content", visible_text)
+        else:
+            print("Either not in readable form or content not found")
+
+
+def page_links(soup):
+    anchor_links = soup.find_all("a")
+    if not anchor_links:
+        print("no link found")
+        return
+    for link in anchor_links:
+        href = link.get("href")
+        if href:
+            print(href)
+
+
+def main():
+    print("Execution of program is done")
+    link = web_url()
+    html_content = retreive_page(link)
+    soup = page_html(html_content)
+    page_title(soup)
+    retreive_body(soup)
+    page_links(soup)
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+
