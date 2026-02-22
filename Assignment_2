@@ -1,0 +1,122 @@
+import sys
+import requests
+from bs4 import BeautifulSoup
+import re
+
+
+def web_url():
+    if len(sys.argv) < 3:
+        print("Argument is None ,please provide it with two URL's")
+        sys.exit()
+    else:
+        link1 = sys.argv[1]
+        link2 = sys.argv[2]
+
+        if not link1.startswith("http") or not link2.startswith("http"):
+            print("Not an authentic url")
+            sys.exit()
+
+    return link1, link2
+
+
+def retreive_page(link):
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
+        server_response = requests.get(link, headers=headers)
+    except requests.exceptions.RequestException as e:
+        print("error in page loading:", e)
+        sys.exit()
+
+    if server_response.status_code != 200:
+        print("not able to fetch the page")
+        sys.exit()
+
+    return server_response.text
+
+
+def page_html(html_content):
+    soup = BeautifulSoup(html_content, "html.parser")
+    return soup
+
+
+def retreive_body(soup):
+    if soup.body:
+        visible_text = soup.body.get_text(separator="\n", strip=True)
+        return visible_text
+    return ""
+
+
+def count_word_freq(text):
+    text = text.lower()
+    words = re.findall(r'[a-z0-9]+', text)
+
+    freq_count = {}
+    for word in words:
+        freq_count[word] = freq_count.get(word, 0) + 1
+
+    return freq_count
+
+
+def hash64bit(word):
+    p = 53
+    m = 2**64
+    hash_val = 0
+    power = 1
+
+    for element in word:
+        hash_val = (hash_val + ord(element) * power) % m
+        power = (power * p) % m
+
+    return hash_val
+
+
+def SimHash(freq_count):
+    vector = [0] * 64
+
+    for word in freq_count:
+        word_hash = hash64bit(word)
+
+        for i in range(64):
+            if (word_hash >> i) & 1:
+                vector[i] += freq_count[word]
+            else:
+                vector[i] -= freq_count[word]
+
+    simhash = 0
+    for i in range(64):
+        if vector[i] > 0:
+            simhash |= (1 << i)
+
+    return simhash
+
+
+def main():
+    print("Execution of program is done")
+    link1, link2 = web_url()
+    html1 = retreive_page(link1)
+    soup1 = page_html(html1)
+    body1 = retreive_body(soup1)
+    freq1 = count_word_freq(body1)
+    simhash1 = SimHash(freq1)
+
+   
+    html2 = retreive_page(link2)
+    soup2 = page_html(html2)
+    body2 = retreive_body(soup2)
+    freq2 = count_word_freq(body2)
+    simhash2 = SimHash(freq2)
+
+    
+    xor = simhash1 ^ simhash2
+    different_bits = bin(xor).count("1")
+    common_bits = 64 - different_bits
+
+    print("\nSimHash 1:", simhash1)
+    print("SimHash 2:", simhash2)
+    print("Common bits in two url:", common_bits)
+
+
+if __name__ == "__main__":
+    main()
