@@ -26,15 +26,13 @@ def web_url():
 
 def retreive_page(link):    #it downloads the content of html
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0"
-        }                                   #request to the server as a browser
+        headers = {"User-Agent": "Mozilla/5.0" }   #request to the server as a browser
         server_response = requests.get(link, headers=headers)
     except requests.exceptions.RequestException as e:
         print("error in page loading:", e)
         sys.exit()
 
-     if server_response.status_code != 200:  #200 means page found and everything is ok 
+    if server_response.status_code != 200:  #200 means page found and everything is ok 
         print("not able to fetch the page")
         sys.exit()
 
@@ -114,8 +112,8 @@ def main():
     different_bits = bin(xor).count("1")#if same bits return 0 else return 1
     common_bits = 64 - different_bits
 
-    print("\nSimHash URL1:", format(simhash1,'064')) #for binary representation of simhash1 value
-    print("SimHash url2:", format(simhash2,'064'))#for binary representation of simhash2 value
+    print("\nSimHash URL1:", format(simhash1,'064b')) #for binary representation of simhash1 value
+    print("SimHash url2:", format(simhash2,'064b'))#for binary representation of simhash2 value
     print("Common bits in two url:", common_bits)#show similarity in both the url
 
 if __name__ == "__main__":
