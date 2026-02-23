@@ -1,13 +1,19 @@
+'''Count the frequency of every word (a word is a sequence of alphanumeric characters, case does NOT matter) in the body of your document
+Write a 64 bit hash function for a word using polynomial rolling hash function
+Here s[i] is the ASCII for letter i in a word, use p = 53 and m = 264
+Compute Simhash for the document (as shown in slide 52)
+Modify your program to take two URLs from the web on the command line, print how many bits are common in their simhashes.'''
+
 import sys
 import requests
 from bs4 import BeautifulSoup
 import re
 
-
+#take  two urls in command line
 def web_url():
     if len(sys.argv) < 3:
         print("Argument is None ,please provide it with two URL's")
-        sys.exit()
+        sys.exit()  #stop the program prevent from code creashing
     else:
         link1 = sys.argv[1]
         link2 = sys.argv[2]
@@ -18,105 +24,99 @@ def web_url():
 
     return link1, link2
 
-
-def retreive_page(link):
+def retreive_page(link):    #it downloads the content of html
     try:
         headers = {
             "User-Agent": "Mozilla/5.0"
-        }
+        }                                   #request to the server as a browser
         server_response = requests.get(link, headers=headers)
     except requests.exceptions.RequestException as e:
         print("error in page loading:", e)
         sys.exit()
 
-    if server_response.status_code != 200:
+     if server_response.status_code != 200:  #200 means page found and everything is ok 
         print("not able to fetch the page")
         sys.exit()
 
     return server_response.text
 
-
 def page_html(html_content):
-    soup = BeautifulSoup(html_content, "html.parser")
+    soup = BeautifulSoup(html_content, "html.parser")#it extracts the html content by using web scraper 
     return soup
 
+def retreive_body(parsed_doc):
+    if parsed_doc.body:
+        for tag in parsed_doc(["script","style"]): #for removing javascript ,css,hidden content
+            tag.decompose()
 
-def retreive_body(soup):
-    if soup.body:
-        visible_text = soup.body.get_text(separator="\n", strip=True)
+        visible_text = parsed_doc.body.get_text(separator="\n", strip=True)
         return visible_text
     return ""
 
-
 def count_word_freq(text):
     text = text.lower()
-    words = re.findall(r'[a-z0-9]+', text)
+    words = re.findall(r'[a-z0-9]+', text) #it will add the valid alphanumeric character
 
-    freq_count = {}
+    freq_count = {}#datastructure which stores the word as key and freq as value
     for word in words:
         freq_count[word] = freq_count.get(word, 0) + 1
 
     return freq_count
 
-
 def hash64bit(word):
     p = 53
     m = 2**64
-    hash_val = 0
+    hash_score = 0
     power = 1
 
     for element in word:
-        hash_val = (hash_val + ord(element) * power) % m
+        hash_score = (hash_score + ord(element) * power) % m  #polynomial rolling hash method
         power = (power * p) % m
 
-    return hash_val
+    return hash_score
 
-
-def SimHash(freq_count):
-    vector = [0] * 64
+def compute_simhash(freq_count): #simhash is use to detect similar documents quickly
+    bit_weights = [0] * 64
 
     for word in freq_count:
         word_hash = hash64bit(word)
 
         for i in range(64):
             if (word_hash >> i) & 1:
-                vector[i] += freq_count[word]
+                bit_weights[i] += freq_count[word]
             else:
-                vector[i] -= freq_count[word]
+                bit_weights[i] -= freq_count[word]
 
     simhash = 0
     for i in range(64):
-        if vector[i] > 0:
+        if bit_weights[i] > 0:
             simhash |= (1 << i)
 
     return simhash
 
-
 def main():
     print("Execution of program is done")
+    
     link1, link2 = web_url()
     html1 = retreive_page(link1)
     soup1 = page_html(html1)
     body1 = retreive_body(soup1)
     freq1 = count_word_freq(body1)
-    simhash1 = SimHash(freq1)
+    simhash1 = compute_simhash(freq1)
 
-   
     html2 = retreive_page(link2)
     soup2 = page_html(html2)
     body2 = retreive_body(soup2)
     freq2 = count_word_freq(body2)
-    simhash2 = SimHash(freq2)
+    simhash2 = compute_simhash(freq2)
 
-    
-    xor = simhash1 ^ simhash2
-    different_bits = bin(xor).count("1")
+    xor = simhash1 ^ simhash2   # for duplicate detection
+    different_bits = bin(xor).count("1")#if same bits return 0 else return 1
     common_bits = 64 - different_bits
 
-    print("\nSimHash 1:", simhash1)
-    print("SimHash 2:", simhash2)
-    print("Common bits in two url:", common_bits)
-
+    print("\nSimHash URL1:", format(simhash1,'064')) #for binary representation of simhash1 value
+    print("SimHash url2:", format(simhash2,'064'))#for binary representation of simhash2 value
+    print("Common bits in two url:", common_bits)#show similarity in both the url
 
 if __name__ == "__main__":
     main()
