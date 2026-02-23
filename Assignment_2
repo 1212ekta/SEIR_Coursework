@@ -3,7 +3,6 @@ Write a 64 bit hash function for a word using polynomial rolling hash function
 Here s[i] is the ASCII for letter i in a word, use p = 53 and m = 264
 Compute Simhash for the document (as shown in slide 52)
 Modify your program to take two URLs from the web on the command line, print how many bits are common in their simhashes.'''
-
 import sys
 import requests
 from bs4 import BeautifulSoup
@@ -11,14 +10,14 @@ import re
 
 #take  two urls in command line
 def web_url():
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 3:#provide two url's
         print("Argument is None ,please provide it with two URL's")
         sys.exit()  #stop the program prevent from code creashing
     else:
         link1 = sys.argv[1]
         link2 = sys.argv[2]
 
-        if not link1.startswith("http") or not link2.startswith("http"):
+        if not link1.startswith("http") or not link2.startswith("http"):#secured link
             print("Not an authentic url")
             sys.exit()
 
@@ -26,7 +25,9 @@ def web_url():
 
 def retreive_page(link):    #it downloads the content of html
     try:
-        headers = {"User-Agent": "Mozilla/5.0" }   #request to the server as a browser
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }                                   #request to the server as a browser
         server_response = requests.get(link, headers=headers)
     except requests.exceptions.RequestException as e:
         print("error in page loading:", e)
@@ -39,8 +40,8 @@ def retreive_page(link):    #it downloads the content of html
     return server_response.text
 
 def page_html(html_content):
-    soup = BeautifulSoup(html_content, "html.parser")#it extracts the html content by using web scraper 
-    return soup
+    parsed_cont = BeautifulSoup(html_content, "html.parser")#it extracts the html content by using web scraper 
+    return parsed_cont
 
 def retreive_body(parsed_doc):
     if parsed_doc.body:
@@ -63,24 +64,23 @@ def count_word_freq(text):
 
 def hash64bit(word):
     p = 53
-    m = 2**64
+    m = 2**64 #this number fits in unsigned 64 bit integer space 
     hash_score = 0
-    power = 1
-
+    
     for element in word:
-        hash_score = (hash_score + ord(element) * power) % m  #polynomial rolling hash method
-        power = (power * p) % m
+        hash_score = (hash_score*p + ord(element) ) % m  #polynomial rolling hash method
+        
 
     return hash_score
 
 def compute_simhash(freq_count): #simhash is use to detect similar documents quickly
-    bit_weights = [0] * 64
+    bit_weights = [0] * 64  #store 64bit
 
     for word in freq_count:
         word_hash = hash64bit(word)
 
         for i in range(64):
-            if (word_hash >> i) & 1:
+            if (word_hash >> i) & 1:#right shift word hash value ith times
                 bit_weights[i] += freq_count[word]
             else:
                 bit_weights[i] -= freq_count[word]
@@ -92,9 +92,10 @@ def compute_simhash(freq_count): #simhash is use to detect similar documents qui
 
     return simhash
 
+
 def main():
     print("Execution of program is done")
-    
+
     link1, link2 = web_url()
     html1 = retreive_page(link1)
     soup1 = page_html(html1)
@@ -115,6 +116,7 @@ def main():
     print("\nSimHash URL1:", format(simhash1,'064b')) #for binary representation of simhash1 value
     print("SimHash url2:", format(simhash2,'064b'))#for binary representation of simhash2 value
     print("Common bits in two url:", common_bits)#show similarity in both the url
+    #take two urls in command line as python.py 1st_url 2nd_url
 
 if __name__ == "__main__":
     main()
