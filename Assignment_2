@@ -1,8 +1,9 @@
 '''Count the frequency of every word (a word is a sequence of alphanumeric characters, case does NOT matter) in the body of your document
 Write a 64 bit hash function for a word using polynomial rolling hash function
 Here s[i] is the ASCII for letter i in a word, use p = 53 and m = 264
-Compute Simhash for the document (as shown in slide 52)
+Compute Simhash for the document 
 Modify your program to take two URLs from the web on the command line, print how many bits are common in their simhashes.'''
+
 import sys
 import requests
 from bs4 import BeautifulSoup
@@ -25,9 +26,7 @@ def web_url():
 
 def retreive_page(link):    #it downloads the content of html
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0"
-        }                                   #request to the server as a browser
+        headers = {"User-Agent": "Mozilla/5.0"}                                   #request to the server as a browser
         server_response = requests.get(link, headers=headers)
     except requests.exceptions.RequestException as e:
         print("error in page loading:", e)
@@ -91,7 +90,6 @@ def compute_simhash(freq_count): #simhash is use to detect similar documents qui
             simhash |= (1 << i)
 
     return simhash
-
 
 def main():
     print("Execution of program is done")
