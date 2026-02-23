@@ -31,24 +31,24 @@ def page_html(html_content):
     soup = BeautifulSoup(html_content, "html.parser")
     return soup
 
-def page_title(soup):
-    if soup.title and soup.title.string:
-        return soup.title.string.strip()
+def page_title(doc):
+    if doc.title and doc.title.string:
+        return doc.title.string.strip()
     else:
         return "No title found"
 
-def retreive_body(soup):
-    if soup.body:
-        visible_text = soup.body.get_text(separator="\n", strip=True)#strip revome the trailing spaces of the content
+def retreive_body(doc):
+    if doc.body:
+        visible_text = doc.body.get_text(separator="\n", strip=True)#strip revome the trailing spaces of the content
         if visible_text:
             return visible_text
         else:
             return "Either not in readable form or content not found"
     return "No body found"
 
-def page_links(soup):
+def page_links(doc):
     store_link = []
-    anchor_links = soup.find_all("a")
+    anchor_links = doc.find_all("a")
     for link in anchor_links:
         hyperlink_ref = link.get("href")
         if hyperlink_ref:
@@ -58,7 +58,7 @@ def page_links(soup):
 def main():
     link = web_url()
     html_content = retreive_page(link)
-    soup = page_html(html_content)
+    doc = page_html(html_content)
 
     all_title = page_title(soup)
     body_text = retreive_body(soup)
