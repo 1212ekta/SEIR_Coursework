@@ -1,67 +1,83 @@
+'''Write a python program that takes a URL on the command line, fetches the page, and outputs (one per line)
+Page Title (without any HTML tags)
+Page Body (just the text, without any html tags)
+All the URLs that the page points/links to
+'''
+
 import sys
 import requests
 from bs4 import BeautifulSoup
 
-def web_url():
+def web_url():#function for detecting url on command line
     if len(sys.argv) < 2:
         print("Argument is None ,please provide it")
         sys.exit()
     else:
         link = sys.argv[1]
-        if not link.startswith("http"):
+        if not link.startswith("http"):#check secured url
             print("Not an authentic url")
             sys.exit()
     return link
 
-
-def retreive_page(link):
+def retreive_page(link):#function for fetching the page by url
     try:
-        headers = {
-            "User-Agent":"Mozilla/5.0"
-        }
+        headers = {"User-Agent":"Mozilla/5.0"}  #request as browser
         server_response = requests.get(link,headers=headers)
     except requests.exceptions.RequestException as e:
         print("Error while fetching page:", e)
         sys.exit()
 
-    if server_response.status_code != 200:
+    if server_response.status_code != 200:#if there is something wrong ,if everything is ok then the code is 200
         print("not able to fetch the page")
         sys.exit()
 
     return server_response.text
 
-
 def page_html(html_content):
     soup = BeautifulSoup(html_content, "html.parser")
     return soup
 
-
 def page_title(soup):
     if soup.title and soup.title.string:
         title = soup.title.string.strip()
-        print(title)
+        return title
     else:
-        print("no heading")
-
+        return "No title found"
 
 def retreive_body(soup):
     if soup.body:
-        visible_text = soup.body.get_text(separator="\n", strip=True)
+        visible_text = soup.body.get_text(separator="\n", strip=True)#strip revome the trailing spaces of the content
         if visible_text:
-            print("page_content", visible_text)
+            return( visible_text)
         else:
-            print("Either not in readable form or content not found")
-
+            return "Either not in readable form or content not found"
 
 def page_links(soup):
+    store_link=[]
     anchor_links = soup.find_all("a")
-    if not anchor_links:
-        print("no link found")
-        return
     for link in anchor_links:
-        href = link.get("href")
-        if href:
-            print(href)
+        hyperlink_ref=link.get("href")
+        if hyperlink_ref:
+            store_link.append(hyperlink_ref)
+    return store_link
+
+def save_in_file(title,body,links): #for cleaner look save the output in seperate file
+    with open("output.txt","w",encoding="utf8") as file:#file name is output.txt
+        file.write("_Page Title_\n")
+        file.write(title+"\n\n")
+
+        file.write("\n_Content body text_")
+        file.write(body)
+
+        file.write("\n_All links__\n")
+        if links:
+            for link in links:
+                file.write(link+"\n")
+        else:
+            file.write("no links found\n")
+
+    print("your output is saved in output.txt")
+
 
 
 def main():
@@ -69,9 +85,10 @@ def main():
     link = web_url()
     html_content = retreive_page(link)
     soup = page_html(html_content)
-    page_title(soup)
-    retreive_body(soup)
-    page_links(soup)
+    all_title= page_title(soup)
+    body_text=retreive_body(soup)
+    all_links =page_links(soup)
+    save_in_file(all_title,body_text,all_links)
 
 
 if __name__ == "__main__":
