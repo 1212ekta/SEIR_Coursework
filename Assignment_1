@@ -1,34 +1,28 @@
-'''Write a python program that takes a URL on the command line, fetches the page, and outputs (one per line)
-Page Title (without any HTML tags)
-Page Body (just the text, without any html tags)
-All the URLs that the page points/links to
-'''
+import sys #for command line argument
+import requests    #for get request
+from bs4 import BeautifulSoup #web scraping
 
-import sys
-import requests
-from bs4 import BeautifulSoup
-
-def web_url():#function for detecting url on command line
+def web_url():  # function for detecting url on command line
     if len(sys.argv) < 2:
-        print("Argument is None ,please provide it")
+        print("Argument is None, please provide it")
         sys.exit()
     else:
         link = sys.argv[1]
-        if not link.startswith("http"):#check secured url
+        if not link.startswith("http"):  # check secured url
             print("Not an authentic url")
             sys.exit()
     return link
 
-def retreive_page(link):#function for fetching the page by url
+def retreive_page(link):  # function for fetching the page by url
     try:
-        headers = {"User-Agent":"Mozilla/5.0"}  #request as browser
-        server_response = requests.get(link,headers=headers)
+        headers = {"User-Agent": "Mozilla/5.0"}  # request as browser
+        server_response = requests.get(link, headers=headers)
     except requests.exceptions.RequestException as e:
         print("Error while fetching page:", e)
         sys.exit()
 
-    if server_response.status_code != 200:#if there is something wrong ,if everything is ok then the code is 200
-        print("not able to fetch the page")
+    if server_response.status_code != 200: #if there is something wrong ,if everything is ok then the code is 200
+        print("Not able to fetch the page")
         sys.exit()
 
     return server_response.text
@@ -39,8 +33,7 @@ def page_html(html_content):
 
 def page_title(soup):
     if soup.title and soup.title.string:
-        title = soup.title.string.strip()
-        return title
+        return soup.title.string.strip()
     else:
         return "No title found"
 
@@ -48,52 +41,38 @@ def retreive_body(soup):
     if soup.body:
         visible_text = soup.body.get_text(separator="\n", strip=True)#strip revome the trailing spaces of the content
         if visible_text:
-            return( visible_text)
+            return visible_text
         else:
             return "Either not in readable form or content not found"
+    return "No body found"
 
 def page_links(soup):
-    store_link=[]
+    store_link = []
     anchor_links = soup.find_all("a")
     for link in anchor_links:
-        hyperlink_ref=link.get("href")
+        hyperlink_ref = link.get("href")
         if hyperlink_ref:
             store_link.append(hyperlink_ref)
     return store_link
 
-def save_in_file(title,body,links): #for cleaner look save the output in seperate file
-    with open("output.txt","w",encoding="utf8") as file:#file name is output.txt
-        file.write("_Page Title_\n")
-        file.write(title+"\n\n")
-
-        file.write("\n_Content body text_")
-        file.write(body)
-
-        file.write("\n_All links__\n")
-        if links:
-            for link in links:
-                file.write(link+"\n")
-        else:
-            file.write("no links found\n")
-
-    print("your output is saved in output.txt")
-
-
-
 def main():
-    print("Execution of program is done")
     link = web_url()
     html_content = retreive_page(link)
     soup = page_html(html_content)
-    all_title= page_title(soup)
-    body_text=retreive_body(soup)
-    all_links =page_links(soup)
-    save_in_file(all_title,body_text,all_links)
 
+    all_title = page_title(soup)
+    body_text = retreive_body(soup)
+    all_links = page_links(soup)
 
+    print("\nPage Title:")
+    print(all_title)
+    print("\nPage Body:")
+    print(body_text)
+    print("\nAll Links:")
+    if all_links:
+        for link in all_links:
+            print(link)
+    else:
+        print("No links found")
 if __name__ == "__main__":
     main()
-
-
-
-
