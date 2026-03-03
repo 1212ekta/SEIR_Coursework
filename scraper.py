@@ -6,7 +6,6 @@ class Information_Retreive:
     def __init__(self,webLink):
         #if the provided link not starts with http or https we will add it for fetching the data
         self.link = webLink if webLink.startswith("http")else "https://"+webLink
-        
         self.parsed_page = None
 
     def extrct_web_data(self):
